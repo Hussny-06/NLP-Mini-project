@@ -1,56 +1,66 @@
 @echo off
+setlocal enabledelayedexpansion
 title NLP Sentiment Classification Model - Demo Launcher
 color 0A
+
+cd /d "%~dp0"
 
 echo ======================================================================
 echo       NLP MINI PROJECT: SENTIMENT CLASSIFICATION DEMO LAUNCHER
 echo ======================================================================
 echo.
 
-:: 1. Check Python installation
+REM Disable Streamlit telemetry and first-run prompts
+set STREAMLIT_GATHER_USAGE_STATS=false
+
+REM 1. Check Python installation
 where python >nul 2>nul
 if %errorlevel% neq 0 (
     echo [ERROR] Python is not installed or not in PATH!
     echo Please install Python 3.9+ from https://www.python.org/
     pause
-    exit /b
+    exit /b 1
 )
 
-:: 2. Check or create virtual environment (.venv)
-if not exist ".venv\Scripts\activate.bat" (
-    echo [INFO] Creating Python virtual environment (.venv)...
+REM 2. Check or create virtual environment
+if not exist ".venv\Scripts\python.exe" (
+    echo [INFO] Creating Python virtual environment: .venv ...
     python -m venv .venv
-    if %errorlevel% neq 0 (
+    if errorlevel 1 (
         echo [ERROR] Failed to create virtual environment.
         pause
-        exit /b
+        exit /b 1
     )
     echo [INFO] Virtual environment created successfully.
-    echo [INFO] Installing required dependencies into .venv...
-    call .venv\Scripts\activate.bat
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-    python -c "import nltk; nltk.download('stopwords', quiet=True); nltk.download('wordnet', quiet=True); nltk.download('punkt', quiet=True)"
-) else (
-    call .venv\Scripts\activate.bat
+    echo [INFO] Installing required dependencies into .venv ...
+    call .venv\Scripts\python.exe -m pip install --upgrade pip
+    call .venv\Scripts\python.exe -m pip install -r requirements.txt
+    call .venv\Scripts\python.exe -c "import nltk; nltk.download('stopwords', quiet=True); nltk.download('wordnet', quiet=True); nltk.download('punkt', quiet=True)"
 )
 
-:: 3. Check if trained model files exist
+REM 3. Check if pre-trained model exists
 if not exist "models\sentiment_model.pkl" (
-    echo [INFO] Pre-trained model not detected in models/
-    echo [INFO] Training model now (takes ~25 seconds)...
-    python train.py
-    if %errorlevel% neq 0 (
+    echo [INFO] Pre-trained model not found. Training model now...
+    call .venv\Scripts\python.exe train.py
+    if errorlevel 1 (
         echo [ERROR] Model training failed.
         pause
-        exit /b
+        exit /b 1
     )
 )
 
-:: 4. Launch Streamlit web application from .venv
-echo [INFO] Launching Streamlit Interactive Web App from .venv...
-echo [INFO] Browser will open automatically at http://localhost:8501
-echo.
-streamlit run app.py
+REM 4. Launch Streamlit web app
+echo [INFO] Opening default browser at http://localhost:8501 ...
+start http://localhost:8501
 
-pause
+echo [INFO] Starting Streamlit server...
+echo [INFO] Keep this command prompt window open during the demo.
+echo.
+
+call .venv\Scripts\python.exe -m streamlit run app.py --server.headless false
+
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Streamlit exited with an error.
+    pause
+)
