@@ -54,18 +54,29 @@ This project takes any raw English sentence typed by a user, processes it throug
 
 ## 🚀 How to Run on Any Lab PC in 2 Steps
 
-### Step 1: Clone the Repository & Install Dependencies
+### Step 1: Clone the Repository & Setup Virtual Environment (`.venv`)
 Open Command Prompt (or Terminal) and run:
 ```bash
 git clone <YOUR-GITHUB-REPO-URL>
 cd "nlp mini project"
+
+# Create and activate a clean virtual environment
+python -m venv .venv
+
+# On Windows:
+.venv\Scripts\activate
+
+# On Linux / macOS:
+source .venv/bin/activate
+
+# Install dependencies inside the virtual environment
 pip install -r requirements.txt
 ```
 
 ### Step 2: Launch the Interactive App
 **On Windows**:
-- Simply double-click `run.bat`  
-*OR run in terminal:*
+- Simply double-click `run.bat` (which automatically creates/activates `.venv` and runs the app)  
+*OR run in your activated terminal:*
 ```bash
 streamlit run app.py
 ```

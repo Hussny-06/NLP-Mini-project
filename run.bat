@@ -16,10 +16,29 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
-:: 2. Check if model files exist
+:: 2. Check or create virtual environment (.venv)
+if not exist ".venv\Scripts\activate.bat" (
+    echo [INFO] Creating Python virtual environment (.venv)...
+    python -m venv .venv
+    if %errorlevel% neq 0 (
+        echo [ERROR] Failed to create virtual environment.
+        pause
+        exit /b
+    )
+    echo [INFO] Virtual environment created successfully.
+    echo [INFO] Installing required dependencies into .venv...
+    call .venv\Scripts\activate.bat
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    python -c "import nltk; nltk.download('stopwords', quiet=True); nltk.download('wordnet', quiet=True); nltk.download('punkt', quiet=True)"
+) else (
+    call .venv\Scripts\activate.bat
+)
+
+:: 3. Check if trained model files exist
 if not exist "models\sentiment_model.pkl" (
     echo [INFO] Pre-trained model not detected in models/
-    echo [INFO] Training model now (takes ~20 seconds)...
+    echo [INFO] Training model now (takes ~25 seconds)...
     python train.py
     if %errorlevel% neq 0 (
         echo [ERROR] Model training failed.
@@ -28,9 +47,9 @@ if not exist "models\sentiment_model.pkl" (
     )
 )
 
-:: 3. Launch Streamlit web application
-echo [INFO] Launching Streamlit Interactive Web App...
-echo [INFO] The browser will open automatically at http://localhost:8501
+:: 4. Launch Streamlit web application from .venv
+echo [INFO] Launching Streamlit Interactive Web App from .venv...
+echo [INFO] Browser will open automatically at http://localhost:8501
 echo.
 streamlit run app.py
 
