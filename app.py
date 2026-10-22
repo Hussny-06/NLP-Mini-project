@@ -1,6 +1,7 @@
 """
-Interactive Streamlit Demo for NLP Sentiment Classification.
-Designed for 7th Sem NLP Mini Project Viva & Evaluation.
+Natural Language Processing Laboratory
+End-to-End Text Sentiment Classification & Explainability System
+Academic Mini Project (Semester 7)
 """
 
 import os
@@ -12,80 +13,131 @@ import streamlit as st
 from utils import clean_text_steps
 
 # ---------------------------------------------------------
-# Page Configuration & Styling
+# Page Setup & Clean Typography
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="NLP Sentiment Classifier",
-    page_icon="🧠",
+    page_title="Sentiment Classification System | NLP Lab",
+    page_icon="📄",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling for polished presentation
+# Refined Minimalist Light Theme Styles
 st.markdown("""
 <style>
-    .main-title {
-        font-size: 2.3rem;
-        font-weight: 700;
-        color: #1E293B;
-        margin-bottom: 0.2rem;
+    /* Global font & background enhancements */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    .sub-title {
-        font-size: 1.05rem;
-        color: #64748B;
-        margin-bottom: 1.5rem;
-    }
-    .metric-card {
-        background-color: #F8FAFC;
+    
+    /* Clean container card */
+    .clean-card {
+        background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
-        border-radius: 10px;
-        padding: 15px;
-        text-align: center;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
     }
-    .pos-badge {
-        background-color: #DCFCE7;
-        color: #166534;
-        padding: 8px 16px;
-        border-radius: 20px;
+    
+    .card-header {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
         font-weight: 600;
-        font-size: 1.2rem;
-        display: inline-block;
+        color: #64748B;
+        margin-bottom: 8px;
     }
-    .neg-badge {
-        background-color: #FEE2E2;
+    
+    /* Sentiment Badges */
+    .badge-pos {
+        background-color: #ECFDF5;
+        color: #065F46;
+        border: 1px solid #A7F3D0;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 1.05rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .badge-neg {
+        background-color: #FEF2F2;
         color: #991B1B;
-        padding: 8px 16px;
-        border-radius: 20px;
+        border: 1px solid #FECACA;
+        padding: 6px 14px;
+        border-radius: 6px;
         font-weight: 600;
-        font-size: 1.2rem;
-        display: inline-block;
+        font-size: 1.05rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
-    .word-pos {
-        background-color: #BBF7D0;
-        color: #14532D;
-        padding: 3px 8px;
-        border-radius: 6px;
-        margin: 2px;
-        font-size: 0.9rem;
+
+    /* Token pills for explainability */
+    .pill-pos {
         display: inline-block;
+        background-color: #F0FDF4;
+        color: #166534;
+        border: 1px solid #BBF7D0;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.82rem;
         font-weight: 500;
+        margin: 3px 4px 3px 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
-    .word-neg {
-        background-color: #FECACA;
-        color: #7F1D1D;
-        padding: 3px 8px;
-        border-radius: 6px;
-        margin: 2px;
-        font-size: 0.9rem;
+
+    .pill-neg {
         display: inline-block;
+        background-color: #FFF1F2;
+        color: #9F1239;
+        border: 1px solid #FECDD3;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.82rem;
         font-weight: 500;
+        margin: 3px 4px 3px 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    
+    /* Top Header */
+    .project-title {
+        font-size: 1.85rem;
+        font-weight: 700;
+        color: #0F172A;
+        letter-spacing: -0.02em;
+        margin-bottom: 4px;
+    }
+    
+    .project-subtitle {
+        font-size: 0.95rem;
+        color: #475569;
+        margin-bottom: 24px;
+    }
+    
+    /* Streamlit button tweaks */
+    div.stButton > button {
+        border-radius: 6px;
+        font-weight: 500;
+        border: 1px solid #CBD5E1;
+        transition: all 0.15s ease-in-out;
+    }
+    
+    div.stButton > button:hover {
+        border-color: #94A3B8;
+        background-color: #F8FAFC;
     }
 </style>
 """, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------
-# Load Model & Artifacts
+# Load Saved Artifacts
 # ---------------------------------------------------------
 @st.cache_resource
 def load_artifacts():
@@ -110,307 +162,288 @@ model, vectorizer, metrics = load_artifacts()
 
 
 # ---------------------------------------------------------
-# Sidebar
+# Explainability Logic
 # ---------------------------------------------------------
-with st.sidebar:
-    st.image("https://img.icons8.com/color/96/artificial-intelligence.png", width=70)
-    st.title("Project Details")
-    st.markdown("**Course**: NLP Mini Project (Sem 7)")
-    st.markdown("**Domain**: Supervised Sentiment Analysis")
-    
-    st.divider()
-    
-    st.subheader("⚙️ Model Pipeline")
-    st.markdown("""
-    - **Dataset**: IMDb Benchmark (50,000 Reviews)
-    - **Preprocessing**: HTML strip, Lowercase, Custom Lemmatization, Negation-aware Stopwords
-    - **Feature Extraction**: TF-IDF (1-2 N-grams, Sublinear TF)
-    - **Classifier**: Tuned Logistic Regression ($C=2.5$)
-    """)
-    
-    if metrics:
-        st.divider()
-        st.subheader("🎯 Test Performance")
-        c1, c2 = st.columns(2)
-        c1.metric("Accuracy", f"{metrics.get('accuracy', 0)*100:.1f}%")
-        c2.metric("F1-Score", f"{metrics.get('f1_score', 0)*100:.1f}%")
-        c3, c4 = st.columns(2)
-        c3.metric("Precision", f"{metrics.get('precision', 0)*100:.1f}%")
-        c4.metric("Recall", f"{metrics.get('recall', 0)*100:.1f}%")
-        
-    st.divider()
-    st.caption("🚀 Ready for Lab & Viva Presentation")
-
-
-# ---------------------------------------------------------
-# Main Page Header
-# ---------------------------------------------------------
-st.markdown('<div class="main-title">🧠 NLP Sentiment Classification Engine</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">A complete end-to-end NLP text classification system with real-time inference & model explainability.</div>', unsafe_allow_html=True)
-
-if model is None or vectorizer is None:
-    st.error("⚠️ Model artifacts not found in `models/` directory! Please run `python train.py` first to train and generate the model.")
-    st.stop()
-
-
-# ---------------------------------------------------------
-# Feature Importance Helper
-# ---------------------------------------------------------
-def explain_prediction(text, vectorizer, model):
+def get_token_attributions(text, vectorizer, model):
     feature_names = np.array(vectorizer.get_feature_names_out())
     weights = model.coef_[0]
     
-    # Transform single text
     vec = vectorizer.transform([text])
     feature_indices = vec.nonzero()[1]
     
-    word_contributions = []
+    contributions = []
     for idx in feature_indices:
         token = feature_names[idx]
         tfidf_val = vec[0, idx]
         weight = weights[idx]
         score = tfidf_val * weight
-        word_contributions.append((token, score, weight))
+        contributions.append((token, score, weight))
         
-    # Sort: positive scores push towards Positive, negative push towards Negative
-    pos_words = [item for item in sorted(word_contributions, key=lambda x: x[1], reverse=True) if item[1] > 0]
-    neg_words = [item for item in sorted(word_contributions, key=lambda x: x[1]) if item[1] < 0]
+    pos_tokens = [item for item in sorted(contributions, key=lambda x: x[1], reverse=True) if item[1] > 0]
+    neg_tokens = [item for item in sorted(contributions, key=lambda x: x[1]) if item[1] < 0]
     
-    return pos_words[:6], neg_words[:6]
+    return pos_tokens[:8], neg_tokens[:8]
 
 
 # ---------------------------------------------------------
-# Application Tabs
+# Sidebar: Project Specification
 # ---------------------------------------------------------
-tab1, tab2, tab3 = st.tabs([
-    "🔮 Live Inference & Explainability",
-    "📊 Performance & Model Analytics",
-    "💡 Viva Guide & Theory"
+with st.sidebar:
+    st.markdown("### NLP Project Reference")
+    st.caption("Department of Computer Science & Engineering")
+    st.markdown("**Subject:** Natural Language Processing (Sem 7)")
+    st.markdown("**Topic:** Supervised Text Classification")
+    
+    st.divider()
+    
+    st.markdown("#### System Specifications")
+    st.markdown("""
+    - **Classifier:** L2-Regularized Logistic Regression ($C=2.5$)
+    - **Vectorization:** TF-IDF with Unigrams & Bigrams $(1, 2)$
+    - **Sublinear TF:** Enabled ($1 + \log(\text{tf})$)
+    - **Dataset:** IMDb Reviews (50,000 Samples)
+    - **Stopwords:** Context-aware (Negations Preserved)
+    """)
+    
+    if metrics:
+        st.divider()
+        st.markdown("#### Test Set Performance")
+        m_col1, m_col2 = st.columns(2)
+        m_col1.metric("Accuracy", f"{metrics.get('accuracy', 0)*100:.1f}%")
+        m_col2.metric("F1-Score", f"{metrics.get('f1_score', 0)*100:.1f}%")
+        m_col3, m_col4 = st.columns(2)
+        m_col3.metric("Precision", f"{metrics.get('precision', 0)*100:.1f}%")
+        m_col4.metric("Recall", f"{metrics.get('recall', 0)*100:.1f}%")
+        
+    st.divider()
+    st.caption("Status: Offline model loaded & ready")
+
+
+# ---------------------------------------------------------
+# Header Section
+# ---------------------------------------------------------
+st.markdown('<div class="project-title">Text Sentiment Classification Engine</div>', unsafe_allow_html=True)
+st.markdown('<div class="project-subtitle">An explainable Natural Language Processing pipeline implementing feature extraction and regularized classification.</div>', unsafe_allow_html=True)
+
+if model is None or vectorizer is None:
+    st.error("Model artifacts missing in `models/`. Please execute `python train.py` once to build the pipeline artifacts.")
+    st.stop()
+
+
+# ---------------------------------------------------------
+# Tabs
+# ---------------------------------------------------------
+tab_inference, tab_metrics, tab_docs = st.tabs([
+    "Interactive Inference",
+    "Evaluation & Feature Analysis",
+    "Methodology & Viva Reference"
 ])
 
 
 # ---------------------------------------------------------
-# TAB 1: Live Inference
+# TAB 1: Inference & Explainability
 # ---------------------------------------------------------
-with tab1:
-    st.subheader("Type or Select a Review to Analyze")
+with tab_inference:
+    st.markdown("##### Select a benchmark sample or enter custom text:")
     
-    # Preset sample chips for quick demonstration
-    st.markdown("**Quick Preset Examples:**")
-    col_e1, col_e2, col_e3, col_e4 = st.columns(4)
-    
-    sample_text = ""
-    if col_e1.button("🌟 Positive Masterpiece", use_container_width=True):
-        st.session_state["review_input"] = "This movie is an absolute masterpiece! Brilliant acting, captivating storyline, and breathtaking cinematography. Highly recommended!"
-    if col_e2.button("⚠️ Terrible Disaster", use_container_width=True):
-        st.session_state["review_input"] = "A complete waste of time and money. The plot was terribly boring, acting was dreadful, and the dialogue felt completely forced."
-    if col_e3.button("🎭 Mixed / Subtle Review", use_container_width=True):
-        st.session_state["review_input"] = "The visual effects and action scenes were quite impressive, but the weak storyline and predictable ending were not good enough."
-    if col_e4.button("⚡ Short & Tricky", use_container_width=True):
-        st.session_state["review_input"] = "I thought it would be bad, but it turned out to be surprisingly enjoyable and heartwarming."
+    c_btn1, c_btn2, c_btn3, c_btn4 = st.columns(4)
+    if c_btn1.button("Positive Sample", use_container_width=True):
+        st.session_state["review_input"] = "The direction and acting were exceptional. A truly moving cinematic experience that I would strongly recommend to anyone."
+    if c_btn2.button("Negative Sample", use_container_width=True):
+        st.session_state["review_input"] = "A frustratingly predictable plot with uninspired acting. The dialogue was unnatural and the pacing dragged endlessly."
+    if c_btn3.button("Nuanced / Mixed Sample", use_container_width=True):
+        st.session_state["review_input"] = "The visual effects and set design were undeniably impressive, but the weak storyline and flat ending were disappointing."
+    if c_btn4.button("Negation Test Case", use_container_width=True):
+        st.session_state["review_input"] = "The trailer made it look promising, but the actual movie is not good at all."
 
-    default_input = st.session_state.get(
-        "review_input", 
-        "The cinematography was brilliant and the lead actor gave an extraordinary performance!"
+    default_text = st.session_state.get(
+        "review_input",
+        "The cinematography was brilliant and the lead performance was remarkably authentic."
     )
 
-    user_input = st.text_area(
-        "Enter English text / movie or product review:",
-        value=default_input,
-        height=110,
-        placeholder="Type any sentence here to test the model..."
+    input_text = st.text_area(
+        "Input text for classification:",
+        value=default_text,
+        height=100,
+        placeholder="Enter a review or statement to analyze..."
     )
 
-    analyze_clicked = st.button("🚀 Analyze Sentiment", type="primary", use_container_width=True)
+    run_classification = st.button("Classify Sentiment", type="primary")
 
-    if user_input.strip():
+    if input_text.strip():
         # Preprocessing breakdown
-        prep_steps = clean_text_steps(user_input)
-        cleaned_text = prep_steps["final"]
+        steps = clean_text_steps(input_text)
+        cleaned_str = steps["final"]
         
         # Inference
-        vec_input = vectorizer.transform([cleaned_text])
-        probabilities = model.predict_proba(vec_input)[0]  # [P(Neg), P(Pos)]
-        prob_neg, prob_pos = probabilities[0], probabilities[1]
-        predicted_class = "Positive" if prob_pos >= 0.5 else "Negative"
+        vec_feat = vectorizer.transform([cleaned_str])
+        probs = model.predict_proba(vec_feat)[0]
+        prob_neg, prob_pos = float(probs[0]), float(probs[1])
+        prediction = "Positive" if prob_pos >= 0.5 else "Negative"
         confidence = max(prob_pos, prob_neg) * 100
 
-        st.divider()
-
-        # Display Result
-        res_col1, res_col2 = st.columns([1, 2])
-
-        with res_col1:
-            st.markdown("### Classification Result")
-            if predicted_class == "Positive":
-                st.markdown('<div class="pos-badge">😊 POSITIVE SENTIMENT</div>', unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Results Section in a clean card layout
+        r_col1, r_col2 = st.columns([1, 2])
+        
+        with r_col1:
+            st.markdown('<div class="card-header">Classification Output</div>', unsafe_allow_html=True)
+            if prediction == "Positive":
+                st.markdown('<div class="badge-pos">● Positive Sentiment</div>', unsafe_allow_html=True)
             else:
-                st.markdown('<div class="neg-badge">😡 NEGATIVE SENTIMENT</div>', unsafe_allow_html=True)
-                
-            st.markdown(f"**Confidence**: `{confidence:.1f}%`")
-
-        with res_col2:
-            st.markdown("### Probability Distribution")
-            p_col_a, p_col_b = st.columns(2)
-            p_col_a.metric("Positive Probability", f"{prob_pos * 100:.1f}%")
-            p_col_b.metric("Negative Probability", f"{prob_neg * 100:.1f}%")
+                st.markdown('<div class="badge-neg">● Negative Sentiment</div>', unsafe_allow_html=True)
             
-            # Visual Bar
-            st.progress(float(prob_pos))
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown(f"**Confidence:** `{confidence:.2f}%`")
+            st.caption("Class determined at $0.50$ probability threshold.")
+
+        with r_col2:
+            st.markdown('<div class="card-header">Class Probability Distribution</div>', unsafe_allow_html=True)
+            pb_col1, pb_col2 = st.columns(2)
+            pb_col1.metric("P(Positive)", f"{prob_pos * 100:.2f}%")
+            pb_col2.metric("P(Negative)", f"{prob_neg * 100:.2f}%")
+            
+            st.progress(prob_pos)
+            st.caption("Score bar reflects posterior positive class probability $P(Y=1|X)$.")
 
         # Explainability Section
-        st.markdown("---")
-        st.markdown("### 🔍 Model Explainability: Why did the model make this decision?")
-        st.caption("Words and phrases extracted from the input along with their impact on the prediction score:")
-        
-        pos_words, neg_words = explain_prediction(cleaned_text, vectorizer, model)
-        
-        exp_col1, exp_col2 = st.columns(2)
-        with exp_col1:
-            st.markdown("🟢 **Words pulling towards POSITIVE:**")
-            if pos_words:
-                html_pos = "".join([f'<span class="word-pos">{word} (+{score:.2f})</span>' for word, score, _ in pos_words])
-                st.markdown(html_pos, unsafe_allow_html=True)
-            else:
-                st.write("*(No strong positive keywords detected)*")
+        st.divider()
+        st.markdown("##### Token-Level Influence (Model Explainability)")
+        st.caption("Key unigram and bigram features extracted from the input along with their signed contribution weights:")
 
-        with exp_col2:
-            st.markdown("🔴 **Words pulling towards NEGATIVE:**")
-            if neg_words:
-                html_neg = "".join([f'<span class="word-neg">{word} ({score:.2f})</span>' for word, score, _ in neg_words])
-                st.markdown(html_neg, unsafe_allow_html=True)
+        pos_tokens, neg_tokens = get_token_attributions(cleaned_str, vectorizer, model)
+
+        att_col1, att_col2 = st.columns(2)
+        with att_col1:
+            st.markdown("**Features supporting Positive class:**")
+            if pos_tokens:
+                pos_html = "".join([f'<span class="pill-pos">{tok} (+{sc:.2f})</span>' for tok, sc, _ in pos_tokens])
+                st.markdown(pos_html, unsafe_allow_html=True)
             else:
-                st.write("*(No strong negative keywords detected)*")
+                st.write("*(No significant positive features detected)*")
+
+        with att_col2:
+            st.markdown("**Features supporting Negative class:**")
+            if neg_tokens:
+                neg_html = "".join([f'<span class="pill-neg">{tok} ({sc:.2f})</span>' for tok, sc, _ in neg_tokens])
+                st.markdown(neg_html, unsafe_allow_html=True)
+            else:
+                st.write("*(No significant negative features detected)*")
 
         # Preprocessing Expander
-        with st.expander("🛠️ Behind the Scenes: Text Preprocessing Pipeline Inspector", expanded=False):
-            st.markdown("**Step 1: Raw Input**")
-            st.code(prep_steps["raw"], language="text")
+        with st.expander("Inspection: Internal Preprocessing Pipeline Steps"):
+            st.markdown("**Stage 1: Raw Input Text**")
+            st.code(steps["raw"], language="text")
             
-            st.markdown("**Step 2: Cleaned & Lowercased (HTML/Special chars stripped)**")
-            st.code(prep_steps["cleaned_chars"], language="text")
+            st.markdown("**Stage 2: Sanitized Text (Punctuation, URLs & HTML Removed)**")
+            st.code(steps["cleaned_chars"], language="text")
             
-            st.markdown("**Step 3: Lemmatized & Negation-Preserved Stopwords Filtered**")
-            st.code(prep_steps["final"], language="text")
+            st.markdown("**Stage 3: Lemmatized & Stopword-Filtered String**")
+            st.code(steps["final"], language="text")
             
-            st.markdown("**Step 4: Generated Word Tokens**")
-            st.write(prep_steps["filtered_lemmas"])
+            st.markdown("**Stage 4: Active Token List**")
+            st.write(steps["filtered_lemmas"])
 
 
 # ---------------------------------------------------------
-# TAB 2: Model Performance & Analytics
+# TAB 2: Metrics & Vocabulary Insights
 # ---------------------------------------------------------
-with tab2:
-    st.subheader("Model Performance & Global Vocabulary Analytics")
+with tab_metrics:
+    st.markdown("##### Model Evaluation on Held-Out Test Set")
     
     if metrics:
-        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-        col_m1.metric("Test Accuracy", f"{metrics.get('accuracy', 0)*100:.2f}%")
-        col_m2.metric("F1-Score", f"{metrics.get('f1_score', 0)*100:.2f}%")
-        col_m3.metric("Precision", f"{metrics.get('precision', 0)*100:.2f}%")
-        col_m4.metric("Recall", f"{metrics.get('recall', 0)*100:.2f}%")
+        mc1, mc2, mc3, mc4 = st.columns(4)
+        mc1.metric("Overall Accuracy", f"{metrics.get('accuracy', 0)*100:.2f}%")
+        mc2.metric("Macro F1-Score", f"{metrics.get('f1_score', 0)*100:.2f}%")
+        mc3.metric("Precision", f"{metrics.get('precision', 0)*100:.2f}%")
+        mc4.metric("Recall", f"{metrics.get('recall', 0)*100:.2f}%")
         
         st.divider()
         
-        c_left, c_right = st.columns(2)
-        
-        with c_left:
-            st.markdown("#### 🗂️ Confusion Matrix on Test Set")
+        left_m, right_m = st.columns([1, 1])
+        with left_m:
+            st.markdown("###### Confusion Matrix")
             cm = metrics.get('confusion_matrix', [[0, 0], [0, 0]])
-            cm_df = pd.DataFrame(
-                cm, 
-                index=["Actual Negative", "Actual Positive"],
-                columns=["Pred Negative", "Pred Positive"]
+            cm_table = pd.DataFrame(
+                cm,
+                index=["True Negative (0)", "True Positive (1)"],
+                columns=["Predicted Negative (0)", "Predicted Positive (1)"]
             )
-            st.dataframe(cm_df, use_container_width=True)
+            st.dataframe(cm_table, use_container_width=True)
             
             tn, fp = cm[0][0], cm[0][1]
             fn, tp = cm[1][0], cm[1][1]
-            st.caption(f"• True Negatives (TN): **{tn}** | False Positives (FP): **{fp}**")
-            st.caption(f"• False Negatives (FN): **{fn}** | True Positives (TP): **{tp}**")
+            st.caption(f"TN: {tn:,} | FP: {fp:,} | FN: {fn:,} | TP: {tp:,}")
             
-        with c_right:
-            st.markdown("#### 📊 Dataset Split Details")
-            st.write(f"• **Training Samples**: {metrics.get('train_samples', 20000):,}")
-            st.write(f"• **Test Samples**: {metrics.get('test_samples', 5000):,}")
-            st.write(f"• **TF-IDF Vocabulary Size**: {metrics.get('vocab_size', 12000):,} n-grams")
-            st.write(f"• **Regularization ($C$)**: 2.5 (L-BFGS optimization)")
+        with right_m:
+            st.markdown("###### Hyperparameter Configuration")
+            st.markdown(f"- **Vocabulary Capacity:** {metrics.get('vocab_size', 12000):,} n-gram features")
+            st.markdown(f"- **Training Partition:** {metrics.get('train_samples', 20000):,} instances")
+            st.markdown(f"- **Validation Partition:** {metrics.get('test_samples', 5000):,} instances")
+            st.markdown(f"- **Solver:** Limited-memory BFGS (L-BFGS)")
+            st.markdown(f"- **Inverse Regularization ($C$):** 2.50")
 
-    # Global Top Words
     st.divider()
-    st.markdown("#### 🌟 Top Learned Sentiment Signals Across Entire Vocabulary")
-    feature_names = np.array(vectorizer.get_feature_names_out())
-    coef = model.coef_[0]
+    st.markdown("##### Global Vocabulary Feature Weights")
+    st.caption("Top discriminative n-gram features learned across the entire corpus:")
+
+    vocab_names = np.array(vectorizer.get_feature_names_out())
+    coef_weights = model.coef_[0]
     
-    top_pos_idx = np.argsort(coef)[-15:][::-1]
-    top_neg_idx = np.argsort(coef)[:15]
-    
-    top_pos_df = pd.DataFrame({
-        "Positive Word / N-Gram": feature_names[top_pos_idx],
-        "Learned Weight": coef[top_pos_idx].round(3)
+    top_pos_idx = np.argsort(coef_weights)[-10:][::-1]
+    top_neg_idx = np.argsort(coef_weights)[:10]
+
+    df_pos_top = pd.DataFrame({
+        "Feature (N-Gram)": vocab_names[top_pos_idx],
+        "Positive Coefficient": coef_weights[top_pos_idx].round(3)
     })
     
-    top_neg_df = pd.DataFrame({
-        "Negative Word / N-Gram": feature_names[top_neg_idx],
-        "Learned Weight": coef[top_neg_idx].round(3)
+    df_neg_top = pd.DataFrame({
+        "Feature (N-Gram)": vocab_names[top_neg_idx],
+        "Negative Coefficient": coef_weights[top_neg_idx].round(3)
     })
-    
-    c_w1, c_w2 = st.columns(2)
-    with c_w1:
-        st.markdown("**Top 15 Positive Features:**")
-        st.dataframe(top_pos_df, use_container_width=True, hide_index=True)
-    with c_w2:
-        st.markdown("**Top 15 Negative Features:**")
-        st.dataframe(top_neg_df, use_container_width=True, hide_index=True)
+
+    w_col1, w_col2 = st.columns(2)
+    with w_col1:
+        st.dataframe(df_pos_top, use_container_width=True, hide_index=True)
+    with w_col2:
+        st.dataframe(df_neg_top, use_container_width=True, hide_index=True)
 
 
 # ---------------------------------------------------------
-# TAB 3: Viva & Theory Guide
+# TAB 3: Methodology & Viva Reference
 # ---------------------------------------------------------
-with tab3:
-    st.subheader("🎓 NLP Viva Preparation & Project Q&A")
-    st.caption("Direct answers to typical questions asked by professors and examiners during project evaluation:")
+with tab_docs:
+    st.markdown("##### Key Technical Points for Project Evaluation")
     
-    with st.expander("Q1: What is TF-IDF and why use it over simple Bag of Words (CountVectorizer)?", expanded=True):
+    with st.expander("1. TF-IDF Formulation & Justification"):
         st.markdown("""
-        - **Bag of Words (BoW)** simply counts raw word frequency. Frequent words like *"film"*, *"movie"*, or *"actor"* appear everywhere and get huge counts even though they carry zero sentiment.
-        - **TF-IDF (Term Frequency - Inverse Document Frequency)** solves this:
-          $$\\text{TF-IDF}(t, d) = \\text{TF}(t, d) \\times \\log\\left(\\frac{N}{DF(t)}\\right)$$
-        - It downweights common words that appear across all reviews and rewards discriminative sentiment words (like *"masterpiece"*, *"awful"*, *"dreadful"*).
-        - We also enabled **sublinear TF** ($\text{sublinear\_tf=True}$), which replaces raw frequency count with $1 + \log(\text{TF})$, preventing a word repeated 10 times from having 10x the importance.
+        **Term Frequency - Inverse Document Frequency (TF-IDF)** mitigates domain-specific stopword distortion:
+        $$\\text{TF-IDF}(t, d) = \\text{TF}(t, d) \\times \\log\\left(\\frac{1 + N}{1 + \\text{DF}(t)}\\right) + 1$$
+        - High-frequency domain words like *"film"*, *"movie"*, or *"actor"* appear across almost all documents and receive small IDF weights.
+        - Salient sentiment tokens (*"exceptional"*, *"dreadful"*, *"flawless"*) receive higher weights.
+        - **Sublinear TF Scaling:** We use $\\text{sublinear\\_tf=True}$, which replaces raw frequency with $1 + \\log(\\text{TF})$ to prevent term repetition abuse.
         """)
 
-    with st.expander("Q2: Why did you preserve negation words instead of deleting all standard stopwords?", expanded=True):
+    with st.expander("2. Context-Aware Stopword Filtering"):
         st.markdown("""
-        - In traditional NLP, removing all stopwords deletes words like *"not"*, *"no"*, *"never"*, *"nor"*.
-        - Consider the sentence: *"The movie was not good."*
-        - If *"not"* is removed, the remaining word is *"good"*, causing the model to misclassify a negative review as positive!
-        - Therefore, our custom stopword list **explicitly preserves negation words** and pairs them with adjacent words via **Bigrams (1-2 N-grams)** (e.g., *"not good"*).
+        Default stopword removal frequently strips crucial negation tokens (*"not"*, *"no"*, *"never"*, *"neither"*).
+        - Example: *"The movie was not good."*  
+        - Under standard stopword removal, *"not"* is discarded, leaving *"good"*, inducing false-positive classification.
+        - Our pipeline keeps negations and pairs them with neighboring words using **bigram features** (e.g., *"not good"*).
         """)
 
-    with st.expander("Q3: What is the difference between Stemming and Lemmatization?", expanded=False):
+    with st.expander("3. Lemmatization vs. Stemming"):
         st.markdown("""
-        - **Stemming (e.g. Porter/Snowball)**: Uses heuristic rules to chop off prefixes/suffixes. Often produces non-dictionary words (e.g., *"caring"* $\\to$ *"car"*, *"better"* $\\to$ *"better"*).
-        - **Lemmatization (WordNet)**: Uses a morphological vocabulary and dictionary lookup to return the true canonical base word (lemma). For example, *"better"* $\\to$ *"good"*, *"running"* $\\to$ *"run"*.
-        - Lemmatization preserves semantic integrity, which is essential for accurate TF-IDF vectorization.
+        - **Stemming (e.g. Porter/Snowball):** Relies on heuristic suffix trimming, regularly outputting non-vocabulary roots (*"troubled"* $\\to$ *"troubl"*, *"caring"* $\\to$ *"car"*).
+        - **Lemmatization (WordNet):** Uses vocabulary structure and morphological analysis to yield genuine base forms (*"better"* $\\to$ *"good"*, *"running"* $\\to$ *"run"*).
         """)
 
-    with st.expander("Q4: Why choose Logistic Regression instead of Naive Bayes or Deep Learning?", expanded=False):
+    with st.expander("4. Decision Function & Explainability"):
         st.markdown("""
-        1. **Over Naive Bayes**: Multinomial Naive Bayes assumes all features are conditionally independent. But in language, words depend heavily on context. Logistic Regression doesn't assume independence and learns optimal discriminative weights ($w_i$).
-        2. **Over Heavy Deep Learning (BERT/LLMs)**:
-           - Trains in **under 15 seconds** without needing an expensive GPU.
-           - Instant inference latency (< 5ms per review), ideal for real-time presentation.
-           - Lightweight artifact size (~3 MB), making the whole repo portable across any lab PC.
-           - Delivers high benchmark accuracy (~89-90%) on IMDb sentiment analysis.
-        """)
-
-    with st.expander("Q5: How does the Model Explainability feature work in your app?", expanded=False):
-        st.markdown("""
-        - In Logistic Regression, the linear decision function is:
-          $$z = w_0 + \\sum_{i=1}^{M} w_i \\cdot x_i$$
-          where $x_i$ is the TF-IDF value of token $i$, and $w_i$ is its learned coefficient.
-        - If $w_i > 0$, the word increases the positive probability.
-        - If $w_i < 0$, the word pulls the probability towards negative.
-        - By calculating $w_i \\times x_i$ for each word in the user's input, we extract and display the exact words driving the model's decision in green or red chips!
+        Logistic Regression maps linear combinations of feature weights to probability:
+        $$P(Y=1|X) = \\sigma(z) = \\frac{1}{1 + e^{-z}}, \\quad \\text{where} \\; z = w_0 + \\sum_{i=1}^{M} w_i x_i$$
+        - Since each feature corresponds to an explicit token/n-gram, the product $w_i \\cdot x_i$ directly quantifies each word's contribution.
+        - Positive values push the probability toward $1$ (Positive sentiment), while negative values pull toward $0$ (Negative sentiment).
         """)
